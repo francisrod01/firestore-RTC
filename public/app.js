@@ -41,7 +41,7 @@ async function createRoom() {
     peerConnection.addTrack(track, localStream);
   });
 
-  await handleCreateRoom(db, peerConnection);
+  const roomRef = await handleCreateRoom(db, peerConnection);
 
   // Code for collecting ICE candidates below
 
@@ -55,9 +55,8 @@ async function createRoom() {
     });
   });
 
-  // Listening for remote session description below
-
-  // Listening for remote session description above
+  // Listening for remote session description
+  await handleListenRemoteSession(roomRef);
 
   // Listen for remote ICE candidates below
 
@@ -208,6 +207,22 @@ async function handleCreateRoom(db, peerConnection) {
   document.querySelector('#currentRoom').innerText = `Current room is ${roomId} - You are the caller!`;
 
   return roomRef;
+}
+
+async function handleListenRemoteSession(roomRef) {
+  // Listening for remote session description.
+  // It listens for changes to the database and detect when an answer from the caller has been added.
+  roomRef.onSnapshot(async snapshot => {
+    console.log('Got updated room:', snapshot.data());
+    const data = snapshot.data();
+    if (!peerConnection.currentRemoteDescription && data && data.answer) {
+      console.log('Set remote description:', data.answer);
+      const answer = new RTCSessionDescription(data.answer);
+      // This will wait until the callee writes the `RTCSessionDescription` for the answer,
+      // and set that as the remote description on the caller `RTCPeerConnection`.
+      await peerConnection.setRemoteDescription(answer);
+    }
+  });
 }
 
 init();
