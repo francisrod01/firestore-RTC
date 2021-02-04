@@ -37,17 +37,11 @@ async function createRoom() {
 
   registerPeerConnectionListeners();
 
-  // Add code for creating a room here
-  
-  // Code for creating room above
-  
   localStream.getTracks().forEach(track => {
     peerConnection.addTrack(track, localStream);
   });
 
-  // Code for creating a room below
-
-  // Code for creating a room above
+  await handleCreateRoom(db, peerConnection);
 
   // Code for collecting ICE candidates below
 
@@ -194,6 +188,26 @@ function registerPeerConnectionListeners() {
     console.log(
         `ICE connection state change: ${peerConnection.iceConnectionState}`);
   });
+}
+
+async function handleCreateRoom(db, peerConnection) {
+  // Creating a room with an initial offer.
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+
+  // A `RTCSessionDescription` object representing the offer from the caller.
+  const roomWithOffer = {
+    offer: {
+      type: offer.type,
+      sdp: offer.sdp,
+    },
+  };
+
+  const roomRef = await db.collection('rooms').add(roomWithOffer);
+  const roomId = roomRef.id;
+  document.querySelector('#currentRoom').innerText = `Current room is ${roomId} - You are the caller!`;
+
+  return roomRef;
 }
 
 init();
