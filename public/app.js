@@ -57,9 +57,8 @@ async function createRoom() {
   // Listening for remote session description
   await handleListenRemoteSession(roomRef);
 
-  // Listen for remote ICE candidates below
-
-  // Listen for remote ICE candidates above
+  // Listen for remote ICE candidates.
+  await handleListenRemoteIceCandidates(roomRef, peerConnection);
 }
 
 function joinRoom() {
@@ -235,6 +234,21 @@ function handleCollectIceCandidates(roomRef, peerConn) {
       // adds them to a collection in the database.
       candidatesCollection.add(json);
     }
+  });
+}
+
+async function handleListenRemoteIceCandidates(roomRef, peerConn) {
+  const remoteName = 'calleeCandidates';
+
+  roomRef.collection(remoteName).onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(async change => {
+      // Listens for added ICE candidates from the remote peer
+      if (change.type === 'added') {
+        const candidate = new RTCIceCandidate(change.doc.data());
+        // adds them to its `RTCPeerConnection` instance.
+        await peerConn.addIceCandidate(candidate);
+      }
+    });
   });
 }
 
