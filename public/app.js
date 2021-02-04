@@ -43,9 +43,8 @@ async function createRoom() {
 
   const roomRef = await handleCreateRoom(db, peerConnection);
 
-  // Code for collecting ICE candidates below
-
-  // Code for collecting ICE candidates above
+  // Collecting ICE candidates
+  handleCollectIceCandidates(roomRef, peerConnection);
 
   peerConnection.addEventListener('track', event => {
     console.log('Got remote track:', event.streams[0]);
@@ -221,6 +220,20 @@ async function handleListenRemoteSession(roomRef) {
       // This will wait until the callee writes the `RTCSessionDescription` for the answer,
       // and set that as the remote description on the caller `RTCPeerConnection`.
       await peerConnection.setRemoteDescription(answer);
+    }
+  });
+}
+
+function handleCollectIceCandidates(roomRef, peerConn) {
+  const localName = 'callerCandidates';
+  const candidatesCollection = roomRef.collection(localName);
+
+  peerConn.addEventListener('icecandidate', event => {
+    if (event.candidate) {
+      // collects them from the WebRTC API
+      const json = event.candidate.toJSON();
+      // adds them to a collection in the database.
+      candidatesCollection.add(json);
     }
   });
 }
