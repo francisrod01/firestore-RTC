@@ -102,9 +102,8 @@ async function joinRoomById(roomId) {
       });
     });
 
-    // Code for creating SDP answer below
-
-    // Code for creating SDP answer above
+    // Creating SDP answer
+    await handleSessionDescription(roomRef, roomSnapshot, peerConnection);
 
     // Listening for remote ICE candidates below
 
@@ -250,6 +249,24 @@ async function handleListenRemoteIceCandidates(roomRef, peerConn) {
       }
     });
   });
+}
+
+async function handleSessionDescription(roomRef, snapshotRef, peerConn) {
+  const offer = snapshotRef.data().offer;
+  console.log('Got offer:', offer);
+  await peerConn.setRemoteDescription(new RTCSessionDescription(offer));
+
+  const answer = await peerConn.createAnswer();
+  console.log('Created answer:', answer);
+  await peerConn.setLocalDescription(answer);
+
+  const roomWithAnswer = {
+    answer: {
+      type: answer.type,
+      sdp: answer.sdp,
+    },
+  };
+  await roomRef.update(roomWithAnswer);
 }
 
 init();
