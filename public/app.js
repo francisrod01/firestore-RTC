@@ -90,9 +90,9 @@ async function joinRoomById(roomId) {
       peerConnection.addTrack(track, localStream);
     });
 
-    // Code for collecting ICE candidates below
-
-    // Code for collecting ICE candidates above
+    // Collecting ICE candidates
+    handleCollectIceCandidates(roomRef, peerConnection);
+    await handleListenRemoteIceCandidates(roomRef, peerConnection);
 
     peerConnection.addEventListener('track', event => {
       console.log('Got remote track:', event.streams[0]);
